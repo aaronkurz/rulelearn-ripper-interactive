@@ -18,6 +18,7 @@ def optimize_single_rule(
         target_label,
         fixed_attributes=None,
         fixed_predicates=None,
+        forbidden_attributes=None,
         pruning_threshold: int = 20,
         random_state: int = 0,
         ratio: float = 2 / 3,
@@ -28,6 +29,8 @@ def optimize_single_rule(
     Optionally, certain features can be forced to appear in the rule via ``fixed_attributes``,
     and/or certain whole predicates (with fixed boundaries) can be given via ``fixed_predicates``.
     Both can be specified together; attributes already covered by fixed_predicates are skipped.
+    Conversely, ``forbidden_attributes`` lists features that must NOT appear in the rule; these
+    must not overlap with the forced attributes or predicates, otherwise a ValueError is raised.
     The algorithm grows additional literals and prunes to produce a single optimized rule.
 
     Args:
@@ -36,6 +39,7 @@ def optimize_single_rule(
         target_label: The positive class label for the rule
         fixed_attributes (list of str, optional): Column names that must appear in the rule
         fixed_predicates (list of Predicate, optional): Predicates that must be included as-is
+        forbidden_attributes (list of str, optional): Column names that must not appear in the rule
         pruning_threshold (int): Minimum instances for grow/prune split. Defaults to 20.
         random_state (int): Random seed for data splitting. Defaults to 0.
         ratio (float): Fraction of data for growing. Defaults to 2/3.
@@ -52,17 +56,6 @@ def optimize_single_rule(
     column_name_index_map = {name: idx for idx, name in enumerate(column_name_list)}
     condition_mat = _encoding_for_parallel(train, column_name_index_map)
 
-    train_arr = train.to_numpy(dtype=np.float64)
-    y_arr = y.values if isinstance(y, Series) else np.array(y)
-
-    pos = train_arr[y_arr == target_label]
-    neg = train_arr[y_arr != target_label]
-
-    neg = _filter_contradicted_instances(pos, neg)
-
-    if len(pos) == 0:
-        return Conjunction([])
-
     # Build the unified forced feature set and optional predefined rule
     forced_literals = []
     forced_features = set()
@@ -75,6 +68,25 @@ def optimize_single_rule(
     if fixed_attributes is not None:
         required_features = set(column_name_index_map[attr]
                                 for attr in fixed_attributes)
+
+    forbidden_features = set()
+    if forbidden_attributes is not None:
+        forbidden_features = set(column_name_index_map[attr]
+                                 for attr in forbidden_attributes)
+
+    _validate_forbidden_clash(column_name_list, forbidden_features,
+                              required_features | forced_features)
+
+    train_arr = train.to_numpy(dtype=np.float64)
+    y_arr = y.values if isinstance(y, Series) else np.array(y)
+
+    pos = train_arr[y_arr == target_label]
+    neg = train_arr[y_arr != target_label]
+
+    neg = _filter_contradicted_instances(pos, neg)
+
+    if len(pos) == 0:
+        return Conjunction([])
 
     # fixed_predicates already cover some attributes -- skip those
     remaining_required_features = required_features - forced_features
@@ -92,7 +104,8 @@ def optimize_single_rule(
     if has_predicates:
         # Grow from fixed predicates first
         rule = _grow_rule_standalone(
-            pos_grow, neg_grow, condition_mat, predefined_rule=forced_literals)
+            pos_grow, neg_grow, condition_mat, predefined_rule=forced_literals,
+            forbidden_features=forbidden_features)
 
         if has_remaining_attrs:
             # Bind data to the rule so far, then force-include remaining attributes
@@ -105,14 +118,18 @@ def optimize_single_rule(
                                           lit.num_val, lit.nom_val)
             rule = _grow_rule_with_required_features(
                 pos_bound, neg_bound, remaining_required_features,
-                condition_mat, learned_rule=rule)
+                condition_mat, learned_rule=rule,
+                forbidden_features=forbidden_features)
     elif has_remaining_attrs:
         # Attributes only — grow from scratch forcing required features
         rule = _grow_rule_with_required_features(
-            pos_grow, neg_grow, required_features, condition_mat)
+            pos_grow, neg_grow, required_features, condition_mat,
+            forbidden_features=forbidden_features)
     else:
         # Unconstrained — standard grow
-        rule = _grow_rule_standalone(pos_grow, neg_grow, condition_mat)
+        rule = _grow_rule_standalone(
+            pos_grow, neg_grow, condition_mat,
+            forbidden_features=forbidden_features)
 
     # All forced features (from both predicates and attributes)
     all_forced = forced_features | required_features
@@ -154,7 +171,34 @@ def _predicates_to_literals(predicates, column_name_index_map, nominal_encoders)
     return literals
 
 
-def _grow_rule_standalone(pos, neg, condition_mat, predefined_rule=None):
+def _validate_forbidden_clash(column_name_list, forbidden_features, forced_features):
+    """
+    Ensure that forbidden features do not overlap with features that are
+    forced via fixed_attributes or fixed_predicates.
+    """
+    clash = forbidden_features & forced_features
+    if clash:
+        names = [column_name_list[idx] for idx in sorted(clash)]
+        raise ValueError(
+            'forbidden_attributes must not overlap with fixed_attributes or '
+            'fixed_predicates. Conflicting column(s): {}'.format(', '.join(names)))
+
+
+def _exclude_features(condition_mat, forbidden_features):
+    """
+    Return the condition matrices with literals of forbidden features removed.
+    Returns None when no allowed literals remain.
+    """
+    if not forbidden_features:
+        return condition_mat
+    mask = ~np.isin(condition_mat[0], list(forbidden_features))
+    if not mask.any():
+        return None
+    return [arr[mask] for arr in condition_mat]
+
+
+def _grow_rule_standalone(pos, neg, condition_mat, predefined_rule=None,
+                          forbidden_features=None):
     """
     Standalone version of RIPPER's grow rule, parameterized by condition_mat.
     """
@@ -172,20 +216,26 @@ def _grow_rule_standalone(pos, neg, condition_mat, predefined_rule=None):
     else:
         learned_rule = []
 
+    grow_mat = _exclude_features(condition_mat, forbidden_features)
+
     while len(neg) > 0:
+        if grow_mat is None or len(pos) == 0:
+            break
         pos = np.asfortranarray(pos)
         neg = np.asfortranarray(neg)
+        prev_pos_len = len(pos)
+        prev_neg_len = len(neg)
 
         best_literal_index = _find_best_literal(
             pos, neg,
-            condition_mat[0], condition_mat[1],
-            condition_mat[2], condition_mat[3]
+            grow_mat[0], grow_mat[1],
+            grow_mat[2], grow_mat[3]
         )
         literal = Literal(
-            condition_mat[0][best_literal_index],
-            condition_mat[1][best_literal_index],
-            condition_mat[2][best_literal_index],
-            condition_mat[3][best_literal_index]
+            grow_mat[0][best_literal_index],
+            grow_mat[1][best_literal_index],
+            grow_mat[2][best_literal_index],
+            grow_mat[3][best_literal_index]
         )
         append_literal(learned_rule, literal)
         pos = _bind_literal(pos, literal.name, literal.op,
@@ -193,11 +243,14 @@ def _grow_rule_standalone(pos, neg, condition_mat, predefined_rule=None):
         neg = _bind_literal(neg, literal.name, literal.op,
                             literal.num_val, literal.nom_val)
 
+        if len(pos) == prev_pos_len and len(neg) == prev_neg_len:
+            break
+
     return learned_rule
 
 
 def _grow_rule_with_required_features(pos, neg, required_features, condition_mat,
-                                     learned_rule=None):
+                                     learned_rule=None, forbidden_features=None):
     """
     Grow a rule ensuring that every feature in ``required_features``
     (a set of column indices) appears in the rule.
@@ -206,7 +259,8 @@ def _grow_rule_with_required_features(pos, neg, required_features, condition_mat
     filtering of contradicting instances is skipped (caller is responsible).
 
     Phase 1: restrict literal selection to remaining required features.
-    Phase 2: grow freely to eliminate remaining negatives.
+    Phase 2: grow freely to eliminate remaining negatives, excluding any
+    forbidden features.
     """
     if len(pos) == 0:
         raise AssertionError('pos must not be empty')
@@ -276,26 +330,35 @@ def _grow_rule_with_required_features(pos, neg, required_features, condition_mat
                             literal.num_val, literal.nom_val)
 
     # Phase 2: grow freely
+    grow_mat = _exclude_features(condition_mat, forbidden_features)
+
     while len(neg) > 0:
+        if grow_mat is None or len(pos) == 0:
+            break
         pos = np.asfortranarray(pos)
         neg = np.asfortranarray(neg)
+        prev_pos_len = len(pos)
+        prev_neg_len = len(neg)
 
         best_idx = _find_best_literal(
             pos, neg,
-            condition_mat[0], condition_mat[1],
-            condition_mat[2], condition_mat[3]
+            grow_mat[0], grow_mat[1],
+            grow_mat[2], grow_mat[3]
         )
         literal = Literal(
-            condition_mat[0][best_idx],
-            condition_mat[1][best_idx],
-            condition_mat[2][best_idx],
-            condition_mat[3][best_idx]
+            grow_mat[0][best_idx],
+            grow_mat[1][best_idx],
+            grow_mat[2][best_idx],
+            grow_mat[3][best_idx]
         )
         append_literal(learned_rule, literal)
         pos = _bind_literal(pos, literal.name, literal.op,
                             literal.num_val, literal.nom_val)
         neg = _bind_literal(neg, literal.name, literal.op,
                             literal.num_val, literal.nom_val)
+
+        if len(pos) == prev_pos_len and len(neg) == prev_neg_len:
+            break
 
     return learned_rule
 

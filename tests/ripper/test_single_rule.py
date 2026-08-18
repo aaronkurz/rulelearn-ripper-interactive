@@ -309,6 +309,136 @@ class TestOptimizeSingleRule(unittest.TestCase):
             else:
                 self.assertFalse(conjunction.evaluate(assignment))
 
+    def test_forbidden_attributes_numeric(self):
+        """Forbid a numeric column from appearing in the rule."""
+        df = create_simple_df()
+        X = df.drop(columns=['target'])
+        y = df['target']
+
+        conjunction = optimize_single_rule(
+            X, y, target_label='True',
+            forbidden_attributes=['int_col']
+        )
+
+        predicate_names = [p.feature.variable_names[0]
+                           for p in conjunction.predicates]
+        self.assertGreater(len(predicate_names), 0)
+        self.assertNotIn('int_col', predicate_names)
+
+        for _, row in df.iterrows():
+            assignment = row.drop('target').to_dict()
+            if row['target'] == 'True':
+                self.assertTrue(conjunction.evaluate(assignment))
+            else:
+                self.assertFalse(conjunction.evaluate(assignment))
+
+    def test_forbidden_attributes_nominal(self):
+        """Forbid a nominal (string) column from appearing in the rule."""
+        df = create_simple_df()
+        X = df.drop(columns=['target'])
+        y = df['target']
+
+        conjunction = optimize_single_rule(
+            X, y, target_label='True',
+            forbidden_attributes=['str_col']
+        )
+
+        predicate_names = [p.feature.variable_names[0]
+                           for p in conjunction.predicates]
+        self.assertGreater(len(predicate_names), 0)
+        self.assertNotIn('str_col', predicate_names)
+
+        for _, row in df.iterrows():
+            assignment = row.drop('target').to_dict()
+            if row['target'] == 'True':
+                self.assertTrue(conjunction.evaluate(assignment))
+            else:
+                self.assertFalse(conjunction.evaluate(assignment))
+
+    def test_forbidden_attributes_multiple(self):
+        """Forbid multiple columns at once."""
+        df = create_separable_float_df()
+        X = df.drop(columns=['target'])
+        y = df['target']
+
+        conjunction = optimize_single_rule(
+            X, y, target_label='True',
+            forbidden_attributes=['float_a', 'float_b']
+        )
+
+        predicate_names = [p.feature.variable_names[0]
+                           for p in conjunction.predicates]
+        self.assertNotIn('float_a', predicate_names)
+        self.assertNotIn('float_b', predicate_names)
+
+    def test_forbidden_with_fixed_attributes_combined(self):
+        """Fixed and forbidden attributes can coexist without a clash."""
+        df = create_simple_df()
+        X = df.drop(columns=['target'])
+        y = df['target']
+
+        conjunction = optimize_single_rule(
+            X, y, target_label='True',
+            fixed_attributes=['float_col'],
+            forbidden_attributes=['int_col']
+        )
+
+        predicate_names = [p.feature.variable_names[0]
+                           for p in conjunction.predicates]
+        self.assertIn('float_col', predicate_names)
+        self.assertNotIn('int_col', predicate_names)
+
+        for _, row in df.iterrows():
+            assignment = row.drop('target').to_dict()
+            if row['target'] == 'True':
+                self.assertTrue(conjunction.evaluate(assignment))
+            else:
+                self.assertFalse(conjunction.evaluate(assignment))
+
+    def test_forbidden_clash_with_fixed_attributes(self):
+        """Forbidden and fixed attributes must not overlap."""
+        df = create_simple_df()
+        X = df.drop(columns=['target'])
+        y = df['target']
+
+        with self.assertRaises(ValueError):
+            optimize_single_rule(
+                X, y, target_label='True',
+                fixed_attributes=['int_col'],
+                forbidden_attributes=['int_col']
+            )
+
+    def test_forbidden_clash_with_fixed_predicates(self):
+        """Forbidden attributes must not overlap with fixed predicate attributes."""
+        df = create_simple_df()
+        X = df.drop(columns=['target'])
+        y = df['target']
+
+        fixed_pred = Predicate(Feature('int_col'), Relation.EQ, 1)
+        with self.assertRaises(ValueError):
+            optimize_single_rule(
+                X, y, target_label='True',
+                fixed_predicates=[fixed_pred],
+                forbidden_attributes=['int_col']
+            )
+
+    def test_forbidden_all_discriminating_features(self):
+        """When forbidden attributes remove all separation, the rule is still
+        returned (best-effort) without the forbidden attributes and without errors."""
+        df = create_simple_df()
+        X = df.drop(columns=['target'])
+        y = df['target']
+
+        conjunction = optimize_single_rule(
+            X, y, target_label='True',
+            forbidden_attributes=['int_col', 'float_col', 'str_col']
+        )
+
+        predicate_names = [p.feature.variable_names[0]
+                           for p in conjunction.predicates]
+        for name in ('int_col', 'float_col', 'str_col'):
+            self.assertNotIn(name, predicate_names)
+
     def test_empty_pos_returns_empty_conjunction(self):
         """When there are no positive instances, return an empty Conjunction."""
         df = pd.DataFrame({

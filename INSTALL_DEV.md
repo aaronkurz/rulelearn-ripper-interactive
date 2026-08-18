@@ -57,4 +57,10 @@ optimize_single_rule(
     X, y, target_label='True',
     fixed_predicates=[Predicate(Feature('x'), Relation.LE, 2.5)],
 )
+
+# Exclude a feature from the rule entirely (must not clash with any forced feature)
+optimize_single_rule(
+    X, y, target_label='True',
+    forbidden_attributes=['y'],
+)
 ```
