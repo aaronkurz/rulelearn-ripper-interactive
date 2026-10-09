@@ -138,8 +138,10 @@ class RipperExplainer(DISExplainer):
         self._condition_mat = _encoding_for_parallel(train, self._column_name_index_map)
         self._gain_n = self._condition_mat[0].shape[0]
 
-        train = train.to_numpy(dtype=np.dtype(float))
-        y = y.values
+        # copy=True: under pandas 3 copy-on-write these arrays come back read-only,
+        # and the numba kernels in binding.py only accept writable ones
+        train = train.to_numpy(dtype=np.dtype(float), copy=True)
+        y = y.to_numpy(copy=True)
 
         x_irep_list = train
         y_irep = y

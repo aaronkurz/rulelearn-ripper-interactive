@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 from pandas import DataFrame
+from pandas.api.types import is_object_dtype, is_signed_integer_dtype, is_string_dtype
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -48,7 +49,9 @@ def init_encoder(
     label_encoders = dict()
 
     for name in data.columns.values:
-        if np.issubdtype(data.dtypes[name], np.object_) or np.issubdtype(data.dtypes[name], np.signedinteger):
+        # pandas 3 reads text into a StringDtype, which np.issubdtype cannot interpret
+        dtype = data.dtypes[name]
+        if is_object_dtype(dtype) or is_string_dtype(dtype) or is_signed_integer_dtype(dtype):
             label_encoders[name] = LabelEncoder()
             label_encoders[name].fit(data[name])
 
