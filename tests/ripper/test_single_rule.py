@@ -2,10 +2,13 @@ import logging
 import sys
 import unittest
 
+import numpy as np
 import pandas as pd
 
 from rulelearn.algorithms.ripper import RipperExplainer
-from rulelearn.algorithms.ripper.single_rule import optimize_single_rule
+from rulelearn.algorithms.ripper.base import _encoding_for_parallel
+from rulelearn.algorithms.ripper.single_rule import (
+    _grow_rule_standalone, _grow_rule_with_required_features, optimize_single_rule)
 from rulelearn.trxf.core.conjunction import Conjunction
 from rulelearn.trxf.core.feature import Feature
 from rulelearn.trxf.core.predicate import Predicate, Relation
@@ -61,6 +64,21 @@ def create_degenerate_df():
     })
     df = df.astype({'float_a': 'float64', 'float_b': 'float64', 'target': 'str'})
     return df
+
+
+def create_xor_grow_input():
+    """XOR data where no single literal has positive gain. The constant
+    first column makes index 0 of the condition matrix a no-op literal."""
+    df = pd.DataFrame({
+        'c': [1.0, 1.0, 1.0, 1.0],
+        'a': [0.0, 1.0, 0.0, 1.0],
+        'b': [0.0, 1.0, 1.0, 0.0],
+    })
+    y = np.array([True, True, False, False])
+    condition_mat = _encoding_for_parallel(
+        df, {name: idx for idx, name in enumerate(df.columns)})
+    data = df.to_numpy(dtype=float, copy=True)
+    return data[y], data[~y], condition_mat
 
 
 class TestOptimizeSingleRule(unittest.TestCase):
@@ -497,6 +515,20 @@ class TestOptimizeSingleRule(unittest.TestCase):
                 self.assertTrue(single_result)
             else:
                 self.assertFalse(single_result)
+
+    def test_grow_standalone_skips_noop_literal(self):
+        """A literal that filters neither set must not end up in the rule."""
+        pos, neg, condition_mat = create_xor_grow_input()
+
+        rule = _grow_rule_standalone(pos, neg, condition_mat)
+        self.assertEqual(rule, [])
+
+    def test_grow_required_skips_noop_literal_in_free_phase(self):
+        """The forced literal stays, but no no-op literal is added afterwards."""
+        pos, neg, condition_mat = create_xor_grow_input()
+
+        rule = _grow_rule_with_required_features(pos, neg, {1}, condition_mat)
+        self.assertEqual([lit.name for lit in rule], [1])
 
 
 if __name__ == '__main__':
