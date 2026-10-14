@@ -1,4 +1,6 @@
+from importlib.metadata import PackageNotFoundError, version
+
 try:
-    from .version import version as __version__
-except ImportError:
+    __version__ = version("rulelearn-ripper-interactive")
+except PackageNotFoundError:
     pass

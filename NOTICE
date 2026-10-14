@@ -1,0 +1,11 @@
+rulelearn-ripper-interactive
+Copyright 2026 Aaron Kurz, Hagen Voelzer
+
+This product is derived from rulelearn (https://github.com/IBM/rulelearn),
+originally released as part of AI Explainability 360
+(https://github.com/Trusted-AI/AIX360), Copyright IBM Corporation,
+licensed under the Apache License, Version 2.0.
+
+Modifications in this fork include constrained single-rule RIPPER optimization
+(optimize_single_rule), pandas 3 compatibility, and renaming of the import
+package to rulelearn_ri.
