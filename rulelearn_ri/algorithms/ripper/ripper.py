@@ -20,8 +20,6 @@ from rulelearn_ri.trxf.core import Predicate, Relation
 
 from pandas import DataFrame, Series
 
-print('Importing dev version v0.982 of RIPPER')
-
 
 class RipperExplainer(DISExplainer):
     """
