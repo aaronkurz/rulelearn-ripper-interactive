@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 
 import unittest
 
@@ -55,7 +55,7 @@ class TestLogisticRuleRegression(unittest.TestCase):
           ['worst concave points <= 0.12', 0.63],
           ['worst perimeter <= 104.38', -0.02]
         ])
-        assert_frame_equal(explanation, expected, check_dtype=False, check_exact=False, check_less_precise=1)
+        assert_frame_equal(explanation, expected, check_dtype=False, check_exact=False, rtol=0.05)
 
         figs, _ = explainer.visualize(bc_df, fb)
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logistic_plot_data.json')) as fp:

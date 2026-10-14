@@ -6,6 +6,7 @@ import xmltodict
 
 import rulelearn_ri.trxf.pmml_export.models as models
 import rulelearn_ri.trxf.pmml_export.serializer as serializer
+from tests.trxf.utilities import normalize_nyoka_year
 
 
 class TestNyokaSerializer(TestCase):
@@ -29,7 +30,8 @@ class TestNyokaSerializer(TestCase):
                 </Header>
             </PMML>
             '''.format(version=nyoka_constants.PMML_SCHEMA.VERSION, time=self.now)
-        self.assertEqual(xmltodict.parse(xml_input=serialized), xmltodict.parse(xml_input=expected))
+        self.assertEqual(xmltodict.parse(xml_input=normalize_nyoka_year(serialized)),
+                         xmltodict.parse(xml_input=normalize_nyoka_year(expected)))
 
     def test_serialize_data_dictionary(self):
         # arrange

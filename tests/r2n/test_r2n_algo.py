@@ -40,7 +40,7 @@ class TestR2Nalgo(TestCase):
         data = pd.DataFrame(np.concatenate((X_cat, y.reshape(-1, 1)), axis=1))
         data.columns = [['z0', 'z1', 'y']]
         label = data[['y']]
-        input_data = data.drop(columns=['y'], axis=1)
+        input_data = data.drop(columns=['y'])
         input_data.loc[:, ['z0', 'z1']] = input_data.loc[:, ['z0', 'z1']].astype(int)
         R2run = r2n_algo.R2Nalgo()
         R2run.cat_column_names = ['z0','z1'] 
@@ -155,8 +155,7 @@ class TestR2Nalgo(TestCase):
         data.columns = data.columns.str.replace(' ', '')
         input_data = data.drop(columns=to_drop)
         label = data[[label_col]]
-        label = label.replace('F', 0)
-        label = label.replace('T', 1)
+        label = label.replace({'F': 0, 'T': 1}).astype(int)
         input_train, input_test, label_train, label_test = train_test_split(input_data, label, train_size=0.75)
         R2run = r2n_algo.R2Nalgo(n_seeds=1, min_temp=10 ** -4, decay_rate=0.98, coef=5 * 10 ** -4, normalize_num=True)
         R2run.fit(input_train, label_train)
@@ -175,7 +174,7 @@ def generate_data():
     data = pd.DataFrame(np.concatenate((X, X_cat, y.reshape(-1, 1)), axis=1))
     data.columns = [['x0', 'x1', 'x2', 'z0', 'z1', 'y']]
     label = data[['y']]
-    input_data = data.drop(columns=['y'], axis=1)
+    input_data = data.drop(columns=['y'])
     input_data.loc[:, ['z0', 'z1']] = input_data.loc[:, ['z0', 'z1']].astype(int)
     cat_col_names = ['z0','z1']
     num_col_names = ['x0','x1','x2']

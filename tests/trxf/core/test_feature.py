@@ -46,8 +46,12 @@ class TestFeature(TestCase):
         empty_expression = ''
         self.assertRaises(ValueError, Feature, empty_expression)
 
+        # Python < 3.12 tokenize raises TokenError itself; newer versions leave it to the parser
         unmatched_parenthesis = '   5 +x1  *  (4-x2))'
-        self.assertRaises(tokenize.TokenError, Feature, unmatched_parenthesis)
+        self.assertRaises((tokenize.TokenError, ValueError), Feature, unmatched_parenthesis)
+
+        unmatched_open_parenthesis = '   5 +x1  *  ((4-x2)'
+        self.assertRaises((tokenize.TokenError, ValueError), Feature, unmatched_open_parenthesis)
 
     def test_special_character_in_feature_name(self):
         feature = Feature('status=A14')

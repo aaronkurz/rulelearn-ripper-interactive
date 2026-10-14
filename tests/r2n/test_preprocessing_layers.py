@@ -1,3 +1,4 @@
+import re
 from unittest import TestCase
 
 import torch
@@ -5,7 +6,16 @@ import torch
 import rulelearn_ri.algorithms.r2n.preprocessing_layers as preproc
 
 
+_NUMBER = re.compile(r'\d+\.?\d*(?:e-?\d+)?')
+
+
 class TestPreprocessingLayer(TestCase):
+
+    def assertPredicateAlmostEqual(self, expected: str, actual: str, places: int = 6):
+        # Coefficients come from float32 weights; their last digits vary across torch versions
+        self.assertEqual(_NUMBER.sub('#', expected), _NUMBER.sub('#', actual))
+        for e, a in zip(_NUMBER.findall(expected), _NUMBER.findall(actual)):
+            self.assertAlmostEqual(float(e), float(a), places=places)
 
     def test_negation_layer(self):
         layer = preproc.NegationLayer()
@@ -19,7 +29,7 @@ class TestPreprocessingLayer(TestCase):
         expected = ['-0.004322529*x1 + 0.30971587*x2 - 0.47518533*x3 - 0.011439145 >= 0',
                     '-0.42489457*x1 - 0.22236899*x2 + 0.15482074*x3 + 0.457775 >= 0']
         for i, pred in enumerate(layer.get_predicates(['x1', 'x2', 'x3'], normalizer=None, thr=0)):
-            self.assertEqual(expected[i], str(pred))
+            self.assertPredicateAlmostEqual(expected[i], str(pred))
 
     def test_basis_expansion_layer(self):
         xs = torch.tensor([[1, 0, 1], [0, 0, 1]])
@@ -51,6 +61,6 @@ class TestPreprocessingLayer(TestCase):
                     '0.162546*x2 - 0.06536698*x3 + 0.22308403 >= 0'
                     ]
         for i, p in enumerate(layer.get_predicates(['x1', 'x2', 'x3'], None, thr=0)):
-            self.assertEqual(expected[i], str(p))
+            self.assertPredicateAlmostEqual(expected[i], str(p))
 
 

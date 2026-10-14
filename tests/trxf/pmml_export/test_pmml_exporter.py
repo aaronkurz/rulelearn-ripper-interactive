@@ -12,7 +12,7 @@ from rulelearn_ri.trxf.classifier.ruleset_classifier import RuleSetClassifier, R
 from rulelearn_ri.trxf.pmml_export import NyokaSerializer
 from rulelearn_ri.trxf.pmml_export.pmml_exporter import PmmlExporter
 from rulelearn_ri.trxf.pmml_export.reader.trxf_reader import TrxfReader
-from tests.trxf.utilities import create_test_ruleset, DATA_FRAME
+from tests.trxf.utilities import create_test_ruleset, DATA_FRAME, normalize_nyoka_year
 
 TIMESTAMP = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
@@ -28,7 +28,7 @@ class TestPmmlExporter(TestCase):
             expected = file.read()
         test_classifier = RuleSetClassifier([(create_test_ruleset())], RuleSelectionMethod.FIRST_HIT, default_label=0)
         actual = exporter.export(test_classifier)
-        self.assertEqual(expected, actual)
+        self.assertEqual(normalize_nyoka_year(expected), normalize_nyoka_year(actual))
 
     def test_export_with_missing_data_dict_should_raise(self):
         reader = TrxfReader()
@@ -73,7 +73,7 @@ class TestPmmlExporter(TestCase):
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources/iris.pmml')) as file:
             expected = file.read()
         actual = exporter.export(classifier)
-        self.assertEqual(expected, actual)
+        self.assertEqual(normalize_nyoka_year(expected), normalize_nyoka_year(actual))
 
     def test_ripper_adult(self):
         data_type = {'age': float,
@@ -135,7 +135,7 @@ class TestPmmlExporter(TestCase):
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', filename)) as file:
             expected = file.read()
         actual = exporter.export(classifier)
-        self.assertEqual(expected, actual)
+        self.assertEqual(normalize_nyoka_year(expected), normalize_nyoka_year(actual))
 
     def test_ripper_wifi(self):
         data = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/00422/wifi_localization.txt',
@@ -174,4 +174,4 @@ class TestPmmlExporter(TestCase):
             expected = file.read()
         actual = exporter.export(classifier)
         # print(actual)
-        self.assertEqual(expected, actual)
+        self.assertEqual(normalize_nyoka_year(expected), normalize_nyoka_year(actual))
