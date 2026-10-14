@@ -5,7 +5,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from rulelearn.algorithms.rbm.rbm import FeatureBinarizer, BRCGExplainer, BooleanRuleCG
+from rulelearn_ri.algorithms.rbm.rbm import FeatureBinarizer, BRCGExplainer, BooleanRuleCG
 
 
 class TestBooleanmRuleCG(unittest.TestCase):

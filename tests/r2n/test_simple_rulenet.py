@@ -4,8 +4,8 @@ from unittest import TestCase
 import numpy as np
 import torch
 
-import rulelearn.algorithms.r2n.mask as wm
-import rulelearn.algorithms.r2n.simple_rulenet as rn
+import rulelearn_ri.algorithms.r2n.mask as wm
+import rulelearn_ri.algorithms.r2n.simple_rulenet as rn
 
 EPSILON = 0.5
 

@@ -1,7 +1,7 @@
 import tokenize
 from unittest import TestCase
 
-from rulelearn.trxf.core.feature import Feature, _shunting_yard
+from rulelearn_ri.trxf.core.feature import Feature, _shunting_yard
 
 
 class TestFeature(TestCase):

@@ -3,8 +3,8 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 
-from rulelearn.trxf.core.dnf_ruleset import DnfRuleSet
-from rulelearn.trxf.core.utils import set_equality, batch_evaluate
+from rulelearn_ri.trxf.core.dnf_ruleset import DnfRuleSet
+from rulelearn_ri.trxf.core.utils import set_equality, batch_evaluate
 
 
 class TestRuleSet(TestCase):

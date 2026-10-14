@@ -1,17 +1,17 @@
 from unittest import TestCase
 
-from rulelearn.algorithms.rbm.boolean_rule_cg import BooleanRuleCG as BRCG
+from rulelearn_ri.algorithms.rbm.boolean_rule_cg import BooleanRuleCG as BRCG
 import pandas as pd
 
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from rulelearn.algorithms.rbm.rbm import FeatureBinarizer
+from rulelearn_ri.algorithms.rbm.rbm import FeatureBinarizer
 
-from rulelearn.trxf.core.feature import Feature
-from rulelearn.trxf.core.predicate import Predicate, Relation
-from rulelearn.trxf.core.conjunction import Conjunction
+from rulelearn_ri.trxf.core.feature import Feature
+from rulelearn_ri.trxf.core.predicate import Predicate, Relation
+from rulelearn_ri.trxf.core.conjunction import Conjunction
 
 class TestBRCG(TestCase):
     @classmethod

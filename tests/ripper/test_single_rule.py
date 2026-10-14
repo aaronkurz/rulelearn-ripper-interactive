@@ -5,13 +5,13 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from rulelearn.algorithms.ripper import RipperExplainer
-from rulelearn.algorithms.ripper.base import _encoding_for_parallel
-from rulelearn.algorithms.ripper.single_rule import (
+from rulelearn_ri.algorithms.ripper import RipperExplainer
+from rulelearn_ri.algorithms.ripper.base import _encoding_for_parallel
+from rulelearn_ri.algorithms.ripper.single_rule import (
     _grow_rule_standalone, _grow_rule_with_required_features, optimize_single_rule)
-from rulelearn.trxf.core.conjunction import Conjunction
-from rulelearn.trxf.core.feature import Feature
-from rulelearn.trxf.core.predicate import Predicate, Relation
+from rulelearn_ri.trxf.core.conjunction import Conjunction
+from rulelearn_ri.trxf.core.feature import Feature
+from rulelearn_ri.trxf.core.predicate import Predicate, Relation
 
 
 def create_simple_df():
