@@ -4,9 +4,19 @@ import numpy as np
 import pandas as pd
 from numpy import ndarray
 from pandas import DataFrame, Series
+from pandas.api.types import is_float_dtype, is_integer_dtype, is_object_dtype
 from sklearn.base import TransformerMixin
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+
+
+def _is_text_dtype(dtype) -> bool:
+    # pandas >= 3 stores strings as StringDtype rather than object
+    return is_object_dtype(dtype) or isinstance(dtype, pd.StringDtype)
+
+
+def _is_ordinal_dtype(dtype) -> bool:
+    return is_integer_dtype(dtype) or is_float_dtype(dtype)
 
 
 # noinspection PyPep8Naming
@@ -77,14 +87,14 @@ class FeatureBinarizer(TransformerMixin):
                 maps[c] = pd.Series(range(valUniq), index=np.sort(data[c].dropna().unique()))
 
             # Categorical column
-            elif (c in self.colCateg) or (data[c].dtype == 'object'):
+            elif (c in self.colCateg) or _is_text_dtype(data[c].dtype):
                 # OneHotEncoder object
                 enc[c] = OneHotEncoder(sparse_output=False, dtype=int, handle_unknown='ignore')
                 # Fit to observed categories
                 enc[c].fit(data[[c]])
 
             # Ordinal column
-            elif np.issubdtype(data[c].dtype, np.integer) | np.issubdtype(data[c].dtype, np.floating):
+            elif _is_ordinal_dtype(data[c].dtype):
                 # Few unique values
                 if valUniq <= self.numThresh + 1:
                     # Thresholds are sorted unique values excluding maximum
@@ -151,7 +161,8 @@ class FeatureBinarizer(TransformerMixin):
                     # Append negations
                     Anew = pd.concat([Anew, 1 - Anew], axis=1, keys=[(str(c), '=='), (str(c), '!=')])
                 else:
-                    Anew.columns = pd.MultiIndex.from_product([[str(c)], ['=='], Anew.columns])
+                    Anew.columns = pd.MultiIndex.from_product([[str(c)], ['=='], Anew.columns],
+                                                          names=['feature', 'operation', 'value'])
                 # Concatenate
                 A = pd.concat([A, Anew], axis=1)
 
@@ -334,10 +345,10 @@ class FeatureBinarizerFromTrees(TransformerMixin):
                 A[(str(c), '', '')] = X[c].map(maps[c])
 
             # Categorical column
-            elif (c in self.colCateg) or (X[c].dtype == 'object'):
+            elif (c in self.colCateg) or _is_text_dtype(X[c].dtype):
                 # In the past, OneHotEncoder did not support NaN. Now it does, but it doesn't logically work for this
                 # scenario. Check for NaNs and throw the same exception manually.
-                if X[[c]].isna().any()[0]:
+                if X[c].isna().any():
                     raise ValueError('Categorical input contains NaN.')
                 # OneHotEncoder object
                 enc[c] = OneHotEncoder(sparse_output=False, dtype=int, handle_unknown='ignore')
@@ -348,12 +359,13 @@ class FeatureBinarizerFromTrees(TransformerMixin):
                 # Original FeatureBinarizer converts all values to str. This class preserves type to be used
                 # during transform.
                 Anew = DataFrame(Anew, index=X.index, columns=enc[c].categories_[0])
-                Anew.columns = pd.MultiIndex.from_product([[str(c)], ['=='], Anew.columns])
+                Anew.columns = pd.MultiIndex.from_product([[str(c)], ['=='], Anew.columns],
+                                                          names=['feature', 'operation', 'value'])
                 # Concatenate
                 A = pd.concat([A, Anew], axis=1)
 
             # Ordinal column
-            elif np.issubdtype(X[c].dtype, np.integer) | np.issubdtype(X[c].dtype, np.floating):
+            elif _is_ordinal_dtype(X[c].dtype):
                 # Unlike FeatureBinarizer, just append the original ordinal column. It will be fit by the
                 # DecisionTreeClassifier.
                 Anew = DataFrame(
@@ -394,6 +406,9 @@ class FeatureBinarizerFromTrees(TransformerMixin):
         # The decision tree will also throw an exception, but it is cryptic.
         if y is None:
             raise ValueError('The parameter \'y\' is required.')
+        # DecisionTreeClassifier accepts NaN since scikit-learn 1.3, so it no longer rejects them for us.
+        if X.isna().any().any():
+            raise ValueError('Input contains NaN.')
 
         # Binarize unary/binary/categorical features according to the FeatureBinarizer style. Ordinal columns
         # are not binarized: i.e., they are included as-is in the data frame with '<=' operations in the index.
@@ -441,7 +456,7 @@ class FeatureBinarizerFromTrees(TransformerMixin):
 
         # Create rule pairs for each feature
         temp: DataFrame = features.copy(True)
-        temp['operation'].replace({'<=': '>', '==': '!=', '': 'not'}, inplace=True)
+        temp['operation'] = temp['operation'].replace({'<=': '>', '==': '!=', '': 'not'})
         features = pd.concat((features, temp))
 
         # Create/sort multi-index that will be used during transformation.

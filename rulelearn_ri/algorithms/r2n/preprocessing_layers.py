@@ -34,7 +34,7 @@ def _normalize_weights(bias, weights):
 
 
 class LinearFeatureLayer(PredicateLearningLayer):
-    """
+    r"""
     This layer takes as input a set of input featues and creates a linear combinations thereof to constuct a predicate in the form \sum w x - b > 0
     where w and b are the weights and biases of the neural network layer.
     """

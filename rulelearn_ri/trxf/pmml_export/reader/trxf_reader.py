@@ -1,7 +1,7 @@
 from typing import Dict
 
-import numpy as np
 import pandas as pd
+from pandas.api.types import is_bool_dtype, is_float_dtype, is_integer_dtype
 
 from rulelearn_ri.trxf.classifier import ruleset_classifier
 from rulelearn_ri.trxf.classifier.ruleset_classifier import RuleSetClassifier
@@ -52,18 +52,17 @@ class TrxfReader(AbstractReader):
         data_fields = []
         for index, value in dtypes.items():
             vals = None
-            if np.issubdtype(value, np.integer):
-                data_type = models.DataType.integer
-                op_type = models.OpType.ordinal
-            elif np.issubdtype(value, np.double):
-                data_type = models.DataType.double
-                op_type = models.OpType.continuous
-            elif np.issubdtype(value, np.floating):
-                data_type = models.DataType.float
-                op_type = models.OpType.continuous
-            elif np.issubdtype(value, np.bool_):
+            # pandas dtype predicates also handle extension dtypes (e.g. the pandas 3 default StringDtype),
+            # which np.issubdtype cannot interpret
+            if is_bool_dtype(value):
                 data_type = models.DataType.boolean
                 op_type = models.OpType.categorical
+            elif is_integer_dtype(value):
+                data_type = models.DataType.integer
+                op_type = models.OpType.ordinal
+            elif is_float_dtype(value):
+                data_type = models.DataType.double if value.itemsize == 8 else models.DataType.float
+                op_type = models.OpType.continuous
             else:
                 data_type = models.DataType.string
                 op_type = models.OpType.categorical

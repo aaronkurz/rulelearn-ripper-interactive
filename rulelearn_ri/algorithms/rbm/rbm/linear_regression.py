@@ -304,7 +304,7 @@ class LinearRuleRegression(BaseEstimator, RegressorMixin):
             if (features is not None) and (f not in features):
                 continue
             # Append term
-            terms = terms.append(pd.Series(self.lr.coef_[i], index=[(f,'','')]))
+            terms = pd.concat([terms, pd.Series(self.lr.coef_[i], index=[(f,'','')])])
             # Initialize x values with min and max
             xPlot[f] = [Xorig[f].min(), Xorig[f].max()]
 
@@ -319,7 +319,7 @@ class LinearRuleRegression(BaseEstimator, RegressorMixin):
             if (features is not None) and (f not in features):
                 continue
             # Append new term
-            terms = terms.append(pd.Series(self.lr.coef_[i+nnzOrd], index=idxTerm))
+            terms = pd.concat([terms, pd.Series(self.lr.coef_[i+nnzOrd], index=idxTerm)])
             # Update x values
             if f not in xPlot:
                 if o in ['<=','>']:
@@ -342,7 +342,7 @@ class LinearRuleRegression(BaseEstimator, RegressorMixin):
             xPlot[f] = np.sort(np.array(xPlot[f]))
             yPlot[f] = np.zeros_like(xPlot[f], dtype=float)
             # Iterate over terms involving feature
-            for ((o,v), c) in terms[f].iteritems():
+            for ((o,v), c) in terms[f].items():
                 if o == '':
                     if self.useOrd and (f in fb.ordinal):
                         # Add linear function of standardized feature with same factor of 0.4

@@ -99,7 +99,6 @@ class LogisticRuleRegression(BaseEstimator, ClassifierMixin):
             penalty='l1',
             C=1/(n*self.lambda0),
             solver='saga',
-            multi_class='ovr',
             max_iter=self.maxSolverIter)
 
         self.p = y.mean()
@@ -358,7 +357,7 @@ class LogisticRuleRegression(BaseEstimator, ClassifierMixin):
             if (features is not None) and (f not in features):
                 continue
             # Append term
-            terms = terms.append(pd.Series(self.lr.coef_[0,i], index=[(f,'','')]))
+            terms = pd.concat([terms, pd.Series(self.lr.coef_[0,i], index=[(f,'','')])])
             # Initialize x values with min and max
             xPlot[f] = [Xorig[f].min(), Xorig[f].max()]
 
@@ -373,7 +372,7 @@ class LogisticRuleRegression(BaseEstimator, ClassifierMixin):
             if (features is not None) and (f not in features):
                 continue
             # Append new term
-            terms = terms.append(pd.Series(self.lr.coef_[0,i+nnzOrd], index=idxTerm))
+            terms = pd.concat([terms, pd.Series(self.lr.coef_[0,i+nnzOrd], index=idxTerm)])
             # Update x values
             if f not in xPlot:
                 if o in ['<=','>']:
@@ -396,7 +395,7 @@ class LogisticRuleRegression(BaseEstimator, ClassifierMixin):
             xPlot[f] = np.sort(np.array(xPlot[f]))
             yPlot[f] = np.zeros_like(xPlot[f], dtype=float)
             # Iterate over terms involving feature
-            for ((o,v), c) in terms[f].iteritems():
+            for ((o,v), c) in terms[f].items():
                 if o == '':
                     if self.useOrd and (f in fb.ordinal):
                         # Add linear function of standardized feature with same factor of 0.4

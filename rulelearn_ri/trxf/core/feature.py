@@ -105,12 +105,14 @@ def _shunting_yard(expression):
         elif token == ')':
             while len(op_stack) > 0 and op_stack[-1] != '(':
                 output.append(op_stack.pop())
-            assert op_stack[-1] == '('
+            if len(op_stack) == 0:
+                raise ValueError('Unmatched closing parenthesis in expression: ' + expression)
             op_stack.pop()
         else:
             output.append(token)
     while len(op_stack) > 0:
-        assert op_stack[-1] != '('
+        if op_stack[-1] == '(':
+            raise ValueError('Unmatched opening parenthesis in expression: ' + expression)
         output.append(op_stack.pop())
 
     _validate_rpn(output, expression)
