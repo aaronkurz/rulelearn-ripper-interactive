@@ -237,11 +237,16 @@ def _grow_rule_standalone(pos, neg, condition_mat, predefined_rule=None,
             grow_mat[2][best_literal_index],
             grow_mat[3][best_literal_index]
         )
+        new_pos = _bind_literal(pos, literal.name, literal.op,
+                                literal.num_val, literal.nom_val)
+        new_neg = _bind_literal(neg, literal.name, literal.op,
+                                literal.num_val, literal.nom_val)
+
+        # a literal that filters neither set only restricts unseen data
+        if len(new_pos) == len(pos) and len(new_neg) == len(neg):
+            break
         append_literal(learned_rule, literal)
-        pos = _bind_literal(pos, literal.name, literal.op,
-                            literal.num_val, literal.nom_val)
-        neg = _bind_literal(neg, literal.name, literal.op,
-                            literal.num_val, literal.nom_val)
+        pos, neg = new_pos, new_neg
 
         if len(pos) == prev_pos_len and len(neg) == prev_neg_len:
             break
@@ -351,11 +356,16 @@ def _grow_rule_with_required_features(pos, neg, required_features, condition_mat
             grow_mat[2][best_idx],
             grow_mat[3][best_idx]
         )
+        new_pos = _bind_literal(pos, literal.name, literal.op,
+                                literal.num_val, literal.nom_val)
+        new_neg = _bind_literal(neg, literal.name, literal.op,
+                                literal.num_val, literal.nom_val)
+
+        # a literal that filters neither set only restricts unseen data
+        if len(new_pos) == len(pos) and len(new_neg) == len(neg):
+            break
         append_literal(learned_rule, literal)
-        pos = _bind_literal(pos, literal.name, literal.op,
-                            literal.num_val, literal.nom_val)
-        neg = _bind_literal(neg, literal.name, literal.op,
-                            literal.num_val, literal.nom_val)
+        pos, neg = new_pos, new_neg
 
         if len(pos) == prev_pos_len and len(neg) == prev_neg_len:
             break
