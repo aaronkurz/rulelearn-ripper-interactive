@@ -14,7 +14,6 @@ class TestBooleanmRuleCG(unittest.TestCase):
     def setUpClass(cls):
         cls.bc = load_breast_cancer()
 
-    @pytest.mark.xfail(reason="rule choice depends on numpy >= 1.25 numerics; metrics still pass", strict=False)
     def test_classification(self):
         bc_df = pd.DataFrame(self.bc.data, columns=self.bc.feature_names)
         X_train, X_test, Y_train, Y_test = train_test_split(bc_df, self.bc.target, test_size = 0.2, random_state = 31)
@@ -36,12 +35,15 @@ class TestBooleanmRuleCG(unittest.TestCase):
         self.assertGreater(f1_score(Y_test, Y_pred), 0.9)
 
         explanation = explainer.explain()
-        self.assertEqual(explanation['rules'], [
+        expected_rules = [
           'compactness error > 0.01 AND worst concavity <= 0.22 AND worst symmetry <= 0.28',
           'mean texture <= 15.46 AND mean concavity <= 0.15 AND area error <= 54.16',
           'fractal dimension error > 0.00 AND worst area <= 680.60 AND worst concave points <= 0.18',
           'mean concave points <= 0.05 AND perimeter error <= 3.80 AND worst area <= 930.88 AND worst smoothness <= 0.16'
-        ])
+        ]
+        # Only the exact rule choice is unstable (it changed with numpy 1.25); the checks above must still pass
+        if explanation['rules'] != expected_rules:
+            pytest.xfail('rule choice depends on numpy >= 1.25 numerics; metrics still pass')
 
 
 if __name__ == '__main__':
