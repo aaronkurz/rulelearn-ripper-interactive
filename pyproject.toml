@@ -45,7 +45,7 @@ Repository = "https://github.com/aaronkurz/rulelearn-ripper-interactive"
 Upstream = "https://github.com/IBM/rulelearn"
 
 [dependency-groups]
-dev = ["pytest", "twine", "xmltodict"]
+dev = ["pytest", "xmltodict"]
 
 [tool.setuptools.packages.find]
 include = ["rulelearn_ri*"]
