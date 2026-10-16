@@ -7,7 +7,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from rulelearn.algorithms.rbm.rbm import FeatureBinarizerFromTrees
+from rulelearn_ri.algorithms.rbm.rbm import FeatureBinarizerFromTrees
 
 
 # noinspection PyPep8Naming
@@ -136,19 +136,19 @@ class TestFeatureBinarizerFromTrees(TestCase):
 
         fbt = FeatureBinarizerFromTrees()
         Xn = self.X_train.copy(True)
-        Xn.iloc[[31, 27, 80], Xn.columns.get_loc('smoothness error')] = np.NaN
+        Xn.iloc[[31, 27, 80], Xn.columns.get_loc('smoothness error')] = np.nan
         with self.assertRaises(ValueError):
             fbt.fit(Xn, self.y_train)
 
         fbt = FeatureBinarizerFromTrees()
         Xn = self.X_train.copy(True)
-        Xn.iloc[[3, 17, 20], Xn.columns.get_loc('bin num')] = np.NaN
+        Xn.iloc[[3, 17, 20], Xn.columns.get_loc('bin num')] = np.nan
         with self.assertRaises(ValueError):
             fbt.fit(Xn, self.y_train)
 
         fbt = FeatureBinarizerFromTrees(colCateg=self.col_categorical)
         Xn = self.X_train.copy(True)
-        Xn.iloc[[3, 17, 20], Xn.columns.get_loc('cat num')] = np.NaN
+        Xn.iloc[[3, 17, 20], Xn.columns.get_loc('cat num')] = np.nan
         with self.assertRaises(ValueError):
             fbt.fit(Xn, self.y_train)
 
@@ -356,7 +356,7 @@ class TestFeatureBinarizerFromTrees(TestCase):
 
         Xn: DataFrame = self.X_test.copy(True)
         idx = Xn.sample(10).index
-        Xn.loc[idx, 'mean radius'] = np.NaN
+        Xn.loc[idx, 'mean radius'] = np.nan
         Xn.loc[idx, 'cat alpha'] = None
         T: DataFrame = fbt.transform(Xn)[0]
         # For continuous values, the NaN values do not qualify for any range.

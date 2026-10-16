@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from rulelearn.algorithms.ripper import binding
+from rulelearn_ri.algorithms.ripper import binding
 
 
 class TestBinding(TestCase):

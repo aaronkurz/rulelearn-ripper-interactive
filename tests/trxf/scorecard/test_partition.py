@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
-import rulelearn.trxf.scorecard as sc
-from rulelearn.trxf.core import Feature
+import rulelearn_ri.trxf.scorecard as sc
+from rulelearn_ri.trxf.core import Feature
 
 
 class TestPartition(TestCase):

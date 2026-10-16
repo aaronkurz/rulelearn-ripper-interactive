@@ -3,11 +3,11 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
-from rulelearn.algorithms.ripper.ripper_ruleset_generator import RipperRuleSetGenerator
-from rulelearn.trxf.core.conjunction import Conjunction
-from rulelearn.trxf.core.dnf_ruleset import DnfRuleSet
-from rulelearn.trxf.core.feature import Feature
-import rulelearn.trxf.core.predicate as predicate
+from rulelearn_ri.algorithms.ripper.ripper_ruleset_generator import RipperRuleSetGenerator
+from rulelearn_ri.trxf.core.conjunction import Conjunction
+from rulelearn_ri.trxf.core.dnf_ruleset import DnfRuleSet
+from rulelearn_ri.trxf.core.feature import Feature
+import rulelearn_ri.trxf.core.predicate as predicate
 
 
 def create_test_data(n_rows):

@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 
 import unittest
 
@@ -13,7 +13,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-from rulelearn.algorithms.rbm.rbm import FeatureBinarizer, GLRMExplainer, LogisticRuleRegression
+from rulelearn_ri.algorithms.rbm.rbm import FeatureBinarizer, GLRMExplainer, LogisticRuleRegression
 
 
 class TestLogisticRuleRegression(unittest.TestCase):
@@ -55,7 +55,7 @@ class TestLogisticRuleRegression(unittest.TestCase):
           ['worst concave points <= 0.12', 0.63],
           ['worst perimeter <= 104.38', -0.02]
         ])
-        assert_frame_equal(explanation, expected, check_dtype=False, check_exact=False, check_less_precise=1)
+        assert_frame_equal(explanation, expected, check_dtype=False, check_exact=False, rtol=0.05)
 
         figs, _ = explainer.visualize(bc_df, fb)
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logistic_plot_data.json')) as fp:

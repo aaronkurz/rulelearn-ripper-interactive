@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-import rulelearn.trxf.core.predicate as predicate
-from rulelearn.trxf.core.feature import Feature
+import rulelearn_ri.trxf.core.predicate as predicate
+from rulelearn_ri.trxf.core.feature import Feature
 
 
 class TestPredicate(TestCase):

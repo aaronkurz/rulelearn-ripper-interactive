@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from rulelearn.trxf.classifier.ruleset_classifier import RuleSetClassifier, RuleSelectionMethod, \
+from rulelearn_ri.trxf.classifier.ruleset_classifier import RuleSetClassifier, RuleSelectionMethod, \
     ConfidenceMetric, WeightMetric
 from tests.trxf import utilities
 

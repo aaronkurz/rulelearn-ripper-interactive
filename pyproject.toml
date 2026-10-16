@@ -1,22 +1,51 @@
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rulelearn"
+name = "rulelearn-ripper-interactive"
 version = "0.2.3"
-requires-python = ">=3.6"
+description = "Rule induction toolkit (fork of IBM rulelearn) with interactive, constrained single-rule RIPPER optimization"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [
+    { name = "Aaron Kurz", email = "aaron.kurz@unisg.ch" },
+    { name = "Hagen Voelzer", email = "hagen.voelzer@unisg.ch" },
+]
+keywords = ["rule induction", "ripper", "interpretable machine learning", "explainability", "rule learning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "numpy",
     "pandas",
     "scikit-learn",
     "numba",
-    "matplotlib",
-    "cvxpy",
     "nyoka==5.4.0",
-    "xmltodict",
-    "torch",
 ]
 
+[project.optional-dependencies]
+rbm = ["cvxpy", "ecos", "matplotlib"]
+r2n = ["torch"]
+all = ["rulelearn-ripper-interactive[rbm,r2n]"]
+
+[project.urls]
+Repository = "https://github.com/aaronkurz/rulelearn-ripper-interactive"
+Upstream = "https://github.com/IBM/rulelearn"
+
+[dependency-groups]
+dev = ["pytest", "xmltodict"]
+
 [tool.setuptools.packages.find]
-include = ["rulelearn*"]
+include = ["rulelearn_ri*"]

@@ -1,9 +1,9 @@
 from unittest import TestCase
 import copy
 
-from rulelearn.trxf.core import Feature
-import rulelearn.trxf.core.predicate as predicate
-import rulelearn.trxf.core.conjunction as conjunction
+from rulelearn_ri.trxf.core import Feature
+import rulelearn_ri.trxf.core.predicate as predicate
+import rulelearn_ri.trxf.core.conjunction as conjunction
 
 
 class TestConjunction(TestCase):

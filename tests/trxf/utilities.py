@@ -1,12 +1,19 @@
+import re
+
 import numpy as np
 import pandas as pd
 
-from rulelearn.trxf.core import Predicate, Feature, Relation, Conjunction, DnfRuleSet
-from rulelearn.trxf.pmml_export import models
-from rulelearn.trxf.pmml_export.models import DataDictionary, DataField, OpType, DataType, \
+from rulelearn_ri.trxf.core import Predicate, Feature, Relation, Conjunction, DnfRuleSet
+from rulelearn_ri.trxf.pmml_export import models
+from rulelearn_ri.trxf.pmml_export.models import DataDictionary, DataField, OpType, DataType, \
     MiningSchema, MiningField, MiningFieldUsageType, RuleSet, SimpleRule, CompoundPredicate, SimplePredicate, Operator, \
     BooleanOperator
-from rulelearn.trxf.pmml_export.models.data_dictionary import Value
+from rulelearn_ri.trxf.pmml_export.models.data_dictionary import Value
+
+
+def normalize_nyoka_year(pmml: str) -> str:
+    """Nyoka stamps the current year into the PMML header copyright; mask it for stable comparisons."""
+    return re.sub(r'Nyoka \(c\) \d{4}', 'Nyoka (c) YYYY', pmml)
 
 DATA_DICTIONARY = DataDictionary(
     dataFields=[DataField(name='toto0', optype=OpType.continuous, dataType=DataType.double),
