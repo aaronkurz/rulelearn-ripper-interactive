@@ -457,8 +457,8 @@ class TestOptimizeSingleRule(unittest.TestCase):
         for name in ('int_col', 'float_col', 'str_col'):
             self.assertNotIn(name, predicate_names)
 
-    def test_empty_pos_returns_empty_conjunction(self):
-        """When there are no positive instances, return an empty Conjunction."""
+    def test_target_label_not_in_y_raises(self):
+        """Like RipperExplainer.fit, a target_label absent from y (no positives) is an error."""
         df = pd.DataFrame({
             'float_a': [1.0, 2.0, 3.0],
             'target': ['False', 'False', 'False']
@@ -467,12 +467,19 @@ class TestOptimizeSingleRule(unittest.TestCase):
         X = df.drop(columns=['target'])
         y = df['target']
 
-        conjunction = optimize_single_rule(
-            X, y, target_label='True',
-            fixed_attributes=['float_a']
-        )
-        self.assertIsInstance(conjunction, Conjunction)
-        self.assertEqual(len(conjunction.predicates), 0)
+        with self.assertRaisesRegex(ValueError, r"target_label 'True' not found in y \(values: \['False'\]\)"):
+            optimize_single_rule(
+                X, y, target_label='True',
+                fixed_attributes=['float_a']
+            )
+
+    def test_target_label_of_wrong_type_raises(self):
+        """A string label for a boolean y matches nothing and must not silently yield an empty rule."""
+        X = pd.DataFrame({'float_a': [1.0, 2.0, 3.0, 4.0]})
+        y = pd.Series([True, True, False, False])
+
+        with self.assertRaisesRegex(ValueError, r"target_label 'True' not found in y \(values: \[False, True\]\)"):
+            optimize_single_rule(X, y, target_label='True')
 
     def test_constrained_rule_uses_ripper_compatibly(self):
         """Verify the standalone grow function classifies correctly

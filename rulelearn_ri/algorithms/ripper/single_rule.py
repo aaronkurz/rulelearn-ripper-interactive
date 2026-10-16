@@ -36,7 +36,7 @@ def optimize_single_rule(
     Args:
         train (pd.DataFrame): Training features
         y (pd.Series): Training labels
-        target_label: The positive class label for the rule
+        target_label: The positive class label for the rule; must be one of the values in ``y``
         fixed_attributes (list of str, optional): Column names that must appear in the rule
         fixed_predicates (list of Predicate, optional): Predicates that must be included as-is
         forbidden_attributes (list of str, optional): Column names that must not appear in the rule
@@ -46,7 +46,15 @@ def optimize_single_rule(
 
     Returns:
         Conjunction: The optimized rule as a TRXF Conjunction
+
+    Raises:
+        ValueError: If ``target_label`` does not occur in ``y`` (e.g. no positive instances, or a label
+            of the wrong type such as ``'True'`` for a boolean ``y``), mirroring ``RipperExplainer.fit``
     """
+    labels = np.unique(y).tolist()
+    if target_label not in labels:
+        raise ValueError('target_label {!r} not found in y (values: {})'.format(target_label, labels))
+
     train = train.copy()
     y = y.copy()
 
