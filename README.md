@@ -14,6 +14,12 @@ upstream `rulelearn` package.
 pip install rulelearn-ripper-interactive
 ```
 
+or, to add it to a [uv](https://docs.astral.sh/uv/) project:
+
+```bash
+uv add rulelearn-ripper-interactive
+```
+
 The core install covers RIPPER and TRXF (rule interchange, metrics and PMML export).
 The other algorithms need heavier dependencies, available as extras:
 
@@ -22,6 +28,8 @@ pip install "rulelearn-ripper-interactive[rbm]"   # BRCG / GLRM (cvxpy, ecos, ma
 pip install "rulelearn-ripper-interactive[r2n]"   # Relational Rule Network (torch)
 pip install "rulelearn-ripper-interactive[all]"   # everything
 ```
+
+With uv, use `uv add "rulelearn-ripper-interactive[rbm]"` (or `[r2n]`, `[all]`) instead.
 
 Requires Python 3.10 or newer.
 
